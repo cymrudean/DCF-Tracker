@@ -1,0 +1,182 @@
+[
+  {
+    "id": "CIT-01",
+    "strand": "Citizenship",
+    "element": "Identity, image and reputation",
+    "statement": "I can distinguish between someone I know and someone I have never met.",
+    "skill": "Recognise familiar people and people they do not know, with adult support",
+    "activity": "It's Good to Talk – Face to Face and Digital Communication",
+    "aole": "Health and Well-being",
+    "example": "Role-play familiar and unfamiliar people"
+  },
+  {
+    "id": "CIT-02",
+    "strand": "Citizenship",
+    "element": "Identity, image and reputation",
+    "statement": "I can recognise data online with adult support, e.g find images of myself and others on the school website/school social media page.",
+    "skill": "Recognise that photographs of themselves or others may be seen online, with an adult",
+    "activity": "Working Together – Awareness of Photos Online",
+    "aole": "Languages, Literacy and Communication",
+    "example": "Discuss class photographs and permissions"
+  },
+  {
+    "id": "CIT-03",
+    "strand": "Citizenship",
+    "element": "Health and well-being",
+    "statement": "I can identify and use a range of media and digital devices from familiar experiences.",
+    "skill": "Explore and use familiar digital devices for a purpose",
+    "activity": "Let's Create – Being a Digital Creator",
+    "aole": "Science and Technology",
+    "example": "Use a tablet camera or digital drawing tool"
+  },
+  {
+    "id": "CIT-04",
+    "strand": "Citizenship",
+    "element": "Digital rights, licensing and ownership",
+    "statement": "I can add my name to digital work.",
+    "skill": "Begin to recognise their own digital work and that other work belongs to someone else",
+    "activity": "Let's Create – Creating Marks On-Screen / Being a Digital Creator",
+    "aole": "Expressive Arts",
+    "example": "Talk about whose picture it is"
+  },
+  {
+    "id": "CIT-05",
+    "strand": "Citizenship",
+    "element": "Online behaviour and online bullying",
+    "statement": "I am beginning to become aware of the feelings of others.",
+    "skill": "Express likes, dislikes and feelings and begin to consider others when using devices",
+    "activity": "It's Good to Talk – Face to Face and Digital Communication",
+    "aole": "Health and Well-being",
+    "example": "Take turns and discuss feelings"
+  },
+  {
+    "id": "DAT-01",
+    "strand": "Data and Computational Thinking",
+    "element": "Data and information literacy",
+    "statement": "I can sort and classify objects using one criterion.",
+    "skill": "Collect, sort and match objects or pictures by one feature",
+    "activity": "Data Data Everywhere – Sort, Order and Match",
+    "aole": "Mathematics and Numeracy",
+    "example": "Sort natural objects by colour or shape"
+  },
+  {
+    "id": "DAT-02",
+    "strand": "Data and Computational Thinking",
+    "element": "Problem solving and modelling",
+    "statement": "I can recognise and follow instructions in the appropriate order to perform a task.  ",
+    "skill": "Recognise, copy and continue a simple pattern or sequence",
+    "activity": "Put On Your Thinking Cap – Sequences, Patterns and Instructions",
+    "aole": "Mathematics and Numeracy",
+    "example": "Repeat a movement or bead pattern"
+  },
+  {
+    "id": "DAT-03",
+    "strand": "Data and Computational Thinking",
+    "element": "Problem solving and modelling",
+    "statement": "I can organise, select and use simple language to give instructions to others.",
+    "skill": "Follow simple instructions in the correct order",
+    "activity": "Put On Your Thinking Cap – Sequences, Patterns and Instructions",
+    "aole": "Health and Well-being",
+    "example": "Follow a handwashing sequence"
+  },
+  {
+    "id": "DAT-04",
+    "strand": "Data and Computational Thinking",
+    "element": "Problem solving and modelling",
+    "statement": "I can organise, select and use simple language to give instructions to others.",
+    "skill": "Give simple instructions to another child or adult",
+    "activity": "Put On Your Thinking Cap – Sequences, Patterns and Instructions",
+    "aole": "Languages, Literacy and Communication",
+    "example": "Tell a partner how to move through a route"
+  },
+  {
+    "id": "DAT-05",
+    "strand": "Data and Computational Thinking",
+    "element": "Problem solving and modelling",
+    "statement": "I can organise, select and use simple language to give instructions to others.",
+    "skill": "Explore controlling a programmable toy or on-screen turtle",
+    "activity": "Show Me The Code – Explore Controllable Toys / Control On-Screen Turtle",
+    "aole": "Science and Technology",
+    "example": "Move a Bee-Bot along a floor mat"
+  },
+  {
+    "id": "INT-01",
+    "strand": "Interacting and Collaborating",
+    "element": "Communication",
+    "statement": "I can talk about different forms of online communication, e.g. e-mail, messaging, video call.",
+    "skill": "Talk about ways people communicate face to face and using digital devices",
+    "activity": "It's Good to Talk – Face to Face and Digital Communication",
+    "aole": "Languages, Literacy and Communication",
+    "example": "Compare a conversation and a video call"
+  },
+  {
+    "id": "INT-02",
+    "strand": "Interacting and Collaborating",
+    "element": "Collaboration",
+    "statement": "I can work with others to produce digital work.",
+    "skill": "Work alongside others to make digital marks or pictures",
+    "activity": "Let's Create – Creating Marks On Screen",
+    "aole": "Expressive Arts",
+    "example": "Create a shared digital picture"
+  },
+  {
+    "id": "INT-03",
+    "strand": "Interacting and Collaborating",
+    "element": "Storing and sharing",
+    "statement": "I can save and retrieve my digital work, e.g clicking icons, within apps, camera roll.",
+    "skill": "With support, recognise how digital work can be saved and found again",
+    "activity": "Let's Create – Being a Digital Creator",
+    "aole": "Science and Technology",
+    "example": "Reopen a saved picture with an adult"
+  },
+  {
+    "id": "PRO-01",
+    "strand": "Producing",
+    "element": "Sourcing, searching and planning digital content",
+    "statement": "I can explore familiar software.",
+    "skill": "Explore familiar apps and tools for a purpose",
+    "activity": "Data Data Everywhere – Supporting Role Play with Digital Applications",
+    "aole": "Humanities",
+    "example": "Use a digital till in a role-play shop"
+  },
+  {
+    "id": "PRO-02",
+    "strand": "Producing",
+    "element": "Creating digital content",
+    "statement": "I can create simple digital work.",
+    "skill": "Make marks and pictures on screen using different colours or tools",
+    "activity": "Let's Create – Creating Marks On-Screen",
+    "aole": "Expressive Arts",
+    "example": "Draw a seasonal picture digitally"
+  },
+  {
+    "id": "PRO-03",
+    "strand": "Producing",
+    "element": "Creating digital content",
+    "statement": "I can explore and use appropriate software to add text and images, exploring size and colour.",
+    "skill": "Explore creating sounds or a simple musical sequence digitally",
+    "activity": "Let's Create – Creating a Simple Musical Sequence or Soundscape",
+    "aole": "Expressive Arts",
+    "example": "Create a soundscape for a story"
+  },
+  {
+    "id": "PRO-04",
+    "strand": "Producing",
+    "element": "Creating digital content",
+    "statement": "I can explore and use animation and video.",
+    "skill": "Create a simple digital piece of work, supported as needed",
+    "activity": "Let's Create – Being a Digital Creator",
+    "aole": "Languages, Literacy and Communication",
+    "example": "Record or illustrate a familiar story"
+  },
+  {
+    "id": "PRO-05",
+    "strand": "Producing",
+    "element": "Evaluating and improving digital content",
+    "statement": "I can comment on work in relation to a single success criterion.",
+    "skill": "Say what they like about their digital work or suggest one change",
+    "activity": "Let's Create – Being a Digital Creator",
+    "aole": "Expressive Arts",
+    "example": "Discuss a picture and change a colour"
+  }
+]
