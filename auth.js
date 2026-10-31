@@ -4,32 +4,40 @@ export function validateConfig(c) {
  if(c.publishableKey.startsWith('sb_publishable_')) return c.publishableKey.length>20;
  try {return JSON.parse(atob(c.publishableKey.split('.')[1])).role==='anon';} catch {return false;}
 }
-const SESSION='nant-celyn-session', VERIFIER='nant-celyn-pkce';
-const base64url=bytes=>btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
+const SESSION='nant-celyn-session';
 export async function authenticate() {
  const response=await fetch('./auth-config.json',{cache:'no-store'});
  const config=await response.json();
- if(!validateConfig(config)) throw new Error('School sign-in has not been configured. Ask your administrator to complete AUTH_SETUP.md.');
+ if(!validateConfig(config)) throw new Error('Staff sign-in has not been configured. Ask your administrator to complete AUTH_SETUP.md.');
  let session;
  try {session=JSON.parse(sessionStorage.getItem(SESSION));}catch{}
  const redirect=new URL('./',location.href).href;
- async function token(body,grant){
-  const r=await fetch(config.supabaseUrl+'/auth/v1/token?grant_type='+grant,{method:'POST',headers:{apikey:config.publishableKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok)throw new Error('Sign-in could not be completed. Please try again.');
-  const t=await r.json();session={access_token:t.access_token,refresh_token:t.refresh_token,expires_at:Date.now()+t.expires_in*1000};sessionStorage.setItem(SESSION,JSON.stringify(session));
+ function store(t){
+  session={access_token:t.access_token,refresh_token:t.refresh_token,expires_at:Date.now()+t.expires_in*1000};
+  sessionStorage.setItem(SESSION,JSON.stringify(session));
  }
+ async function publicRequest(path,body){
+  const r=await fetch(config.supabaseUrl+'/auth/v1/'+path,{method:'POST',headers:{apikey:config.publishableKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw Error('The request could not be completed. Check your details and confirmation email, then try again. If it continues, contact your administrator.');
+  return r.json();
+ }
+ const hash=new URLSearchParams(location.hash.slice(1));
  const params=new URLSearchParams(location.search);
- if(params.has('error')||params.has('error_description')){history.replaceState({},'',redirect);sessionStorage.removeItem(VERIFIER);throw new Error('Google sign-in was cancelled or denied. Please try again.');}
- if(params.has('code')){
-  const verifier=sessionStorage.getItem(VERIFIER);sessionStorage.removeItem(VERIFIER);history.replaceState({},'',redirect);
-  if(!verifier)throw new Error('Your sign-in request expired. Please try again in this browser tab.');
-  await token({auth_code:params.get('code'),code_verifier:verifier},'pkce');
+ let recovery=false;
+ if(hash.has('error')||params.has('error')){
+  history.replaceState({},'',redirect);throw Error('The email link expired or was not accepted. Request a new link.');
+ }
+ if(hash.has('access_token')){
+  recovery=hash.get('type')==='recovery';
+  store({access_token:hash.get('access_token'),refresh_token:hash.get('refresh_token'),expires_in:Number(hash.get('expires_in'))||3600});
+  history.replaceState({},'',redirect);
+  if(recovery)sessionStorage.setItem('nant-celyn-recovery','true');
  }
  let refreshing;
  async function accessToken(){
   if(!session)throw new Error('Please sign in again.');
   if(session.expires_at<Date.now()+60000){
-   refreshing??=token({refresh_token:session.refresh_token},'refresh_token').finally(()=>{refreshing=undefined});await refreshing;
+   refreshing??=publicRequest('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(store).finally(()=>{refreshing=undefined});await refreshing;
   }
   return session.access_token;
  }
@@ -39,18 +47,18 @@ export async function authenticate() {
   if(!r.ok) {if(r.status===401){sessionStorage.removeItem(SESSION);throw Error('Your session expired. Sign out and sign in again.');}throw Error('The school service could not complete this request. Check your connection or contact your administrator.');}
   return r.status===204?null:r.json();
  }
- async function signIn(){
-  const bytes=crypto.getRandomValues(new Uint8Array(48)),verifier=base64url(bytes);
-  sessionStorage.setItem(VERIFIER,verifier);
-  const challenge=base64url(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))));
-  const url=new URL(config.supabaseUrl+'/auth/v1/authorize');
-  url.search=new URLSearchParams({provider:'google',redirect_to:redirect,code_challenge:challenge,code_challenge_method:'s256',scopes:'email profile'}).toString();
-  location.assign(url.href);
+ async function signIn(email,password){store(await publicRequest('token?grant_type=password',{email,password}));location.replace(redirect);}
+ async function signUp(email,password,name){
+  await publicRequest('signup?redirect_to='+encodeURIComponent(redirect),{email,password,data:{full_name:name}});
  }
- async function signOut(){try{if(session)await api('/auth/v1/logout',{method:'POST'});}finally{session=null;sessionStorage.removeItem(SESSION);sessionStorage.removeItem(VERIFIER);location.replace(redirect);}}
- if(!session)return {signIn,signOut};
+ async function resetPassword(email){await publicRequest('recover?redirect_to='+encodeURIComponent(redirect),{email});}
+ async function updatePassword(password){await api('/auth/v1/user',{method:'PUT',body:JSON.stringify({password})});sessionStorage.removeItem('nant-celyn-recovery');location.replace(redirect);}
+ async function signOut(){try{if(session)await api('/auth/v1/logout',{method:'POST'});}finally{session=null;sessionStorage.removeItem(SESSION);sessionStorage.removeItem('nant-celyn-recovery');location.replace(redirect);}}
+ const actions={signIn,signUp,resetPassword,updatePassword,signOut};
+ if(!session)return actions;
  const user=await api('/auth/v1/user');
- const accounts=await api('/rest/v1/allowed_accounts?select=email,role');
- if(accounts.length!==1 || !['staff','pupil'].includes(accounts[0].role))return {signIn,signOut,denied:true};
- return {user,role:accounts[0].role,api,signIn,signOut};
+ if(sessionStorage.getItem('nant-celyn-recovery')==='true')return {...actions,recovery:true};
+ const accounts=await api('/rest/v1/allowed_accounts?select=email,role&email=eq.'+encodeURIComponent(user.email.toLowerCase()));
+ if(accounts.length!==1 || !['staff','pupil','owner'].includes(accounts[0].role))return {...actions,denied:true};
+ return {...actions,user,role:accounts[0].role,api};
 }

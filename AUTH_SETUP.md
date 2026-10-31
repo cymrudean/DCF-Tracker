@@ -1,39 +1,50 @@
-# Enable school Google sign-in
+# Staff self-registration and senior-leader access
 
-The app now fails closed: without authentication configuration, it shows setup information and does not load learner records. GitHub Pages can host the frontend; Supabase provides Google authentication and a database with row-level access rules.
+No Google Cloud registration or Google sign-in is needed. Staff register using any email address and a password. Supabase handles authentication, confirmation/recovery emails and protected database storage; GitHub Pages serves the frontend. Blank `auth-config.json` intentionally leaves the app locked.
 
-## Administrator setup
+## One-time setup
 
-1. Create a school-managed Supabase project. Run `supabase/schema.sql` in its SQL Editor. This creates the approval list and private account records with row-level security.
-2. In Google Cloud Console, create a web OAuth client for the school. Configure the consent screen for your school organisation where possible. Register the callback URL displayed in Supabase's Google provider settings (normally `https://YOUR-PROJECT.supabase.co/auth/v1/callback`). A school administrator may need to approve the app for pupils.
-3. In Supabase Authentication → Providers → Google, enable Google and enter the Google client ID and client secret. Keep the secret in Supabase, never in GitHub or this chat. Enable email verification/default provider identity protections; do not enable anonymous sign-ins.
-4. In Supabase URL Configuration, set Site URL to `https://cymrudean.github.io/DCF-Tracker/` and add that exact address as an allowed redirect URL. For local development add `http://localhost:3000/` explicitly if needed; do not allow wildcard production redirects.
-5. Update `auth-config.json` with the project URL and **publishable key** (or legacy anon key). These are intentionally public. Never use a secret or service-role key: it bypasses database access rules. The frontend rejects obvious secret-key configuration.
-6. In the SQL Editor, approve individual real school email addresses:
+1. Create or use a school-managed Supabase project. In **Authentication → Providers**, enable Email/password and allow new registrations. Keep **Confirm email** enabled and anonymous sign-ins disabled. Set the minimum password length to at least 12. Google can be disabled.
+2. Run the complete `supabase/schema.sql` in the SQL Editor. It migrates the previous Google version without deleting tracker records or existing approved accounts. New registrations are pending; metadata cannot choose a role.
+3. In **Authentication → URL Configuration**, set Site URL and an allowed redirect to `https://cymrudean.github.io/DCF-Tracker/`. For testing, explicitly add `http://localhost:3000/`. Avoid wildcard production redirects. Use Supabase's default confirmation/recovery email link templates, which redirect with session tokens in the URL fragment; the app consumes and removes that fragment immediately. Existing custom PKCE/code templates must be reset to the default implicit email flow.
+4. Configure school-approved SMTP under the project's authentication email settings. Supabase's default email service is restricted and is not suitable for unrestricted staff registration or production delivery. This requires an email provider, not Google Cloud. Configure its domain/DNS and test both confirmation and password reset delivery. Enter mail credentials only in Supabase settings, never in chat or GitHub.
+5. Put only the project URL and public publishable key (or legacy anon key) into `auth-config.json`, and commit it. Never use a service-role/secret key.
+6. Register your own account in the app and confirm your email. In Supabase SQL Editor, bootstrap your owner role with your actual lowercase email:
 
    ```sql
-   insert into public.allowed_accounts (email, role)
-   values ('actual-staff-email-at-your-school', 'staff');
+   insert into public.allowed_accounts(email,role)
+   values ('your-actual-email-address', 'owner')
+   on conflict(email) do update set role='owner';
    ```
 
-   Use lowercase email addresses, and role `pupil` for pupils. Only administrators change this list through Supabase. The app offers no self-service role selector. Deleting an approval row blocks subsequent database requests, even if a Google session remains active. Supabase project administrators remain responsible for access and retention.
-7. Commit the public configuration and exact logo asset to GitHub. Verify Pages has deployed the new commit.
+   Sign out and back in. The **Senior-leader overview** will appear. Owner roles can only be granted by a database administrator, never through signup or the staff approval screen. Keep owner access limited to authorised leaders.
+7. Ask staff to register and confirm their email. They can use any email provider. In your senior-leader overview, approve each known staff member. If approval fails, check email confirmation in Supabase. Pending or revoked accounts cannot read/write tracker data. Approval converts the account to staff; owner accounts are excluded from in-app approval/revocation.
 
-## What this version does
+## What the owner can see
 
-- OAuth authorisation-code flow with PKCE. The school Google password is entered only on Google's sign-in page.
-- Approval-list check after Google login. An unapproved Google user may obtain an authentication session but cannot access tracker records.
-- Data access rules require both approved email and matching authenticated owner ID. Accounts cannot read or update another account's records.
-- Tokens stay in sessionStorage for the current tab. Access tokens refresh when needed; signing out clears the local session and calls the provider logout endpoint. Closing a tab ends its local session; signing out of this app does not sign out of Google itself.
-- Records are stored per account in Supabase, with conflict detection to avoid silently overwriting another window's changes. On a failed save, editing stops and the current changes can be exported before reloading.
-- Staff can add learner aliases and restore old JSON backups. Pupil UI omits those controls. Roles do not grant access to other accounts: shared teacher/pupil records, class assignment and teacher moderation are not implemented. Do not treat these UI controls as independent database permissions.
-- Previous anonymous browser records are not automatically copied into a signed-in account. Export from the previous version first, then sign in as staff and restore the backup. The old `digital-den-v1` localStorage entry is left untouched.
-- Curriculum statements are public static files. Learner records are protected database data, not public GitHub files.
+- Staff names, email addresses, registration dates (database), approval status, learner totals and applied-in-context counts.
+- Select a staff member to view their learner skills, strand/element charts, observations and evidence links in read-only mode. You can export the selected tracker.
+- Approve staff or revoke access. Revocation preserves records for leadership review. Staff cannot see each other's records, change roles or approve accounts. The database enforces these boundaries even if somebody modifies the browser UI or makes API requests directly.
+- Passwords are handled by Supabase and are never shown to the owner. Evidence files retain Google Drive/OneDrive sharing permissions: viewing a link does not grant access to the underlying file. Staff must share files with authorised leaders separately.
 
-## Required real-service validation before pupil use
+This is a single-school deployment: the owner can view all tracker records in this Supabase project, including migrated records. Do not share the same database with unrelated schools. Names supplied during registration are self-declared, so verify identity before approval. Existing approved pupil accounts remain compatible, but public registration is now a staff request, not pupil enrolment. Existing Google users may use Forgot password to set a password for the same confirmed email instead of creating duplicate accounts. Email-address changes are not offered by the app; if changed in Supabase, an administrator must reconcile the registration and approval email.
 
-Frontend tests use a mocked API. Real Google credentials/project configuration were unavailable during development. After configuring the project, test approved staff and pupil sign-in, denied accounts, logout, data persistence across devices, and attempted cross-account access using the database API (must return no other account's records). Also confirm deleting approval blocks reads/writes and that Google's school consent policy works for pupil accounts. Do not put production pupil information into an unverified deployment.
+## Sessions and records
 
-## School logo
+Tokens are held in sessionStorage per tab and refreshed as needed. Sign out clears local session tokens. Password recovery uses an emailed link and presents a new-password form before tracker access. Old anonymous browser records are not automatically migrated: export the old version's backup and restore as an approved staff member. Conflicting or failed saves stop editing and offer export so changes are not silently lost.
 
-The Digital Den header branding has been replaced with Nant Celyn. Supply the exact original PNG as `assets/school-logo.png`; it appears on the login screen and sidebar. The inline image in chat did not expose downloadable file bytes to the development tools, so no generated replacement is included. Until the file is added, the school name is shown without an invented crest. Digital Den activity names in the curriculum are preserved.
+## Validation before real pupil records
+
+Automated browser tests mock the authentication service. PostgreSQL policy tests execute the actual schema in an isolated PostgreSQL engine with simulated Supabase identities. Neither proves the configured hosted service and email delivery work. Test real registration, confirmation delivery, password login, password reset, pending denial, owner approval/revocation, staff isolation, owner read-only access and logout in your actual project. Do not use real pupil information until these pass.
+
+Optional database regression:
+
+```sh
+# Install the test engine outside the repository; it is not an app dependency.
+npm install --prefix /tmp/dcf-sql-test --no-audit --no-fund @electric-sql/pglite@0.3.14
+PGLITE_MODULE=/tmp/dcf-sql-test/node_modules/@electric-sql/pglite node tests/database.cjs
+```
+
+## Exact school logo
+
+Add the original PNG as `assets/school-logo.png` in GitHub. It will display on the login screen and sidebar. The inline chat image did not provide downloadable bytes to the workspace, so the school name is displayed until the exact file is added. Digital Den curriculum activity names are preserved.
