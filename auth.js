@@ -13,6 +13,24 @@ export function serviceError(status,code){
  if(status===401)return 'Your session or project key was not accepted. Sign out and sign in again; if it continues, check that auth-config.json uses the public key for the correct project.'+reference;
  return 'The school service could not complete this request. Share this error reference with your administrator.'+reference;
 }
+export function registrationError(status,code){
+ const messages={
+ email_address_not_authorized:'Supabase cannot send email to this address with its default email service. Your administrator must configure custom SMTP in Supabase Authentication email settings.',
+ over_email_send_rate_limit:'Supabase’s email sending limit has been reached. Wait before requesting another email; your administrator should check email limits and configure production SMTP.',
+ over_request_rate_limit:'Too many authentication requests. Wait before trying again.',
+ signup_disabled:'New account registration is disabled. Your administrator must enable new user signups in Supabase Authentication settings.',
+ email_provider_disabled:'Email/password sign-in is disabled. Enable the Email provider in Supabase Authentication settings.',
+ weak_password:'Choose a stronger password of at least 12 characters that meets the school password settings.',
+ email_not_confirmed:'Confirm your email address before signing in. Use the newest confirmation email.',
+ invalid_credentials:'The email or password was not accepted. Check your details or use Forgot password.',
+ unexpected_failure:'Supabase could not finish the request. Your administrator should check Authentication logs for email delivery errors or a failing database registration trigger.',
+ email_address_invalid:'Enter a valid email address.',
+ user_already_exists:'This email may already have an account. Try signing in or use Forgot password.',
+ validation_failed:'The supplied details were not accepted. Check your email and password requirements.',
+ captcha_failed:'The verification check failed. If CAPTCHA is enabled in Supabase, the app needs a matching CAPTCHA integration.'
+ };
+ return (messages[code]||'Account request failed. Your administrator should check Supabase Authentication logs for the matching request.')+' (HTTP '+status+(code?'; '+code:'')+')';
+}
 const SESSION='nant-celyn-session';
 export async function authenticate() {
  const response=await fetch('./auth-config.json',{cache:'no-store'});
@@ -27,7 +45,10 @@ export async function authenticate() {
  }
  async function publicRequest(path,body){
   const r=await fetch(config.supabaseUrl+'/auth/v1/'+path,{method:'POST',headers:{apikey:config.publishableKey,'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok)throw Error('The request could not be completed. Check your details and confirmation email, then try again. If it continues, contact your administrator.');
+  if(!r.ok){
+   let code='';try{const failure=await r.json();if(typeof failure.code==='string'&&/^[a-z0-9_]{1,80}$/.test(failure.code))code=failure.code;}catch{}
+   throw Error(registrationError(r.status,code));
+  }
   return r.json();
  }
  const hash=new URLSearchParams(location.hash.slice(1));
