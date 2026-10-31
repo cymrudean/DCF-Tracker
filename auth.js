@@ -59,6 +59,6 @@ export async function authenticate() {
  const user=await api('/auth/v1/user');
  if(sessionStorage.getItem('nant-celyn-recovery')==='true')return {...actions,recovery:true};
  const accounts=await api('/rest/v1/allowed_accounts?select=email,role&email=eq.'+encodeURIComponent(user.email.toLowerCase()));
- if(accounts.length!==1 || !['staff','pupil','owner'].includes(accounts[0].role))return {...actions,denied:true};
+ if(accounts.length!==1 || !['staff','pupil','owner','admin'].includes(accounts[0].role))return {...actions,denied:true};
  return {...actions,user,role:accounts[0].role,api};
 }

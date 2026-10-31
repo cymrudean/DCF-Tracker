@@ -23,13 +23,13 @@ export async function showLeadership(auth,recordOwner){
  if(!registrations.length)list.append(el('p','No staff registrations yet.'));
  for(const r of registrations){
   const role=roles.get(r.email),card=el('article',undefined,'staff-entry');
-  card.append(el('h3',r.full_name),el('p',r.email),el('p',role==='owner'?'Senior leader':role?'Approved · '+role:'Awaiting approval / access revoked'));
+  card.append(el('h3',r.full_name),el('p',r.email),el('p',['owner','admin'].includes(role)?'Administrator':role?'Approved · '+role:'Awaiting approval / access revoked'));
   const data=records.find(row=>row.owner_id===r.id)?.data;
   if(data&&validBackup(data,skills.map(s=>s.id))){
    const pupils=data.pupils;const applied=pupils.reduce((n,p)=>n+progress(skills,p.records).counts[2],0);
    card.append(el('p',`${pupils.length} learner record(s) · ${applied} applied-in-context checks`));
   }else card.append(el('p','No saved tracker records'));
-  if(role!=='owner'){
+  if(!['owner','admin'].includes(role)){
    const button=el('button',role?'Revoke access':'Approve staff account','secondary');
    button.onclick=async()=>{
     if(role&&!confirm('Revoke '+r.email+'’s tracker access? Existing records will be retained for senior-leader review.'))return;

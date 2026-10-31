@@ -48,3 +48,13 @@ PGLITE_MODULE=/tmp/dcf-sql-test/node_modules/@electric-sql/pglite node tests/dat
 ## Exact school logo
 
 Add the original PNG as `assets/school-logo.png` in GitHub. It will display on the login screen and sidebar. The inline chat image did not provide downloadable bytes to the workspace, so the school name is displayed until the exact file is added. Digital Den curriculum activity names are preserved.
+
+## Dean Davies administrator account
+
+The requested administrator email is `dean.davies@nantcelyn.net`, with role `admin`. This has the same protected leadership permissions as the existing `owner` role. Staff cannot grant either role through registration or the approval screen.
+
+1. Complete Supabase configuration above and run the updated `supabase/schema.sql`.
+2. Create the email account through the app's registration form and confirm the email, or create/invite the user in Supabase Authentication. Set a new private password there; no password is stored in source code.
+3. Run `supabase/admin-account.sql` in the Supabase SQL Editor to grant Dean administrator access. Sign out and sign back in.
+
+The SQL grant alone does not create the authentication account. The app cannot use this login until the backend is configured, the user exists, and the grant is applied. Use a new password rather than reusing one shared in chat.

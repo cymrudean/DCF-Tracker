@@ -41,7 +41,7 @@ try{
   };
  }else{
   $('#signout').onclick=auth.signOut;
-  $('#account-label').textContent=auth.user.email+' · '+(auth.role==='owner'?'Senior leader':auth.role);
+  $('#account-label').textContent=auth.user.email+' · '+(['owner','admin'].includes(auth.role)?'Administrator':auth.role);
   const {startTracker}=await import('./app.js');await startTracker(auth);
   $('#auth-screen').hidden=true;$('#tracker-app').hidden=false;
  }

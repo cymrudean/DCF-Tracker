@@ -5,7 +5,7 @@ create table if not exists public.allowed_accounts (
  role text not null
 );
 alter table public.allowed_accounts drop constraint if exists allowed_accounts_role_check;
-alter table public.allowed_accounts add constraint allowed_accounts_role_check check (role in ('staff','pupil','owner'));
+alter table public.allowed_accounts add constraint allowed_accounts_role_check check (role in ('staff','pupil','owner','admin'));
 create table if not exists public.tracker_records (
  owner_id uuid primary key references auth.users(id) on delete cascade,
  data jsonb not null check (jsonb_typeof(data) = 'object'),
@@ -20,7 +20,7 @@ create table if not exists public.staff_registrations (
 -- Only database administrators can grant owner access. Signup metadata never supplies roles.
 create or replace function public.is_school_owner() returns boolean
 language sql stable security definer set search_path = '' as $$
- select exists(select 1 from public.allowed_accounts where email=lower(auth.jwt()->>'email') and role='owner');
+ select exists(select 1 from public.allowed_accounts where email=lower(auth.jwt()->>'email') and role in ('owner','admin'));
 $$;
 revoke all on function public.is_school_owner() from public;
 grant execute on function public.is_school_owner() to authenticated;
@@ -47,7 +47,7 @@ begin
  if not public.is_school_owner() then raise exception 'Owner access required'; end if;
  select email,email_confirmed_at into account_email,confirmed from auth.users where id=account_id;
  if account_email is null then raise exception 'Account not found'; end if;
- if exists(select 1 from public.allowed_accounts where email=lower(account_email) and role='owner') then
+ if exists(select 1 from public.allowed_accounts where email=lower(account_email) and role in ('owner','admin')) then
   raise exception 'Owner accounts must be managed by a database administrator';
  end if;
  if approve then

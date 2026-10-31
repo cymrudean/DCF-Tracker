@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 let state={version:1,pupils:[{id:crypto.randomUUID(),name:'Learner 1',records:{}}]};
 let revision=0;
 const requestedOwner=new URLSearchParams(location.search).get('staff');
-const recordOwner=auth.role==='owner' && requestedOwner ? requestedOwner : auth.user.id;
+const recordOwner=['owner','admin'].includes(auth.role) && requestedOwner ? requestedOwner : auth.user.id;
 const readOnly=recordOwner!==auth.user.id;
 const rows=await auth.api('/rest/v1/tracker_records?select=data,revision&owner_id=eq.'+encodeURIComponent(recordOwner));
 if(rows.length){
@@ -19,7 +19,7 @@ if(rows.length){
 if(auth.role==='pupil'||readOnly){
  $('#add-pupil').hidden=true;$('#import-button').hidden=true;
 }
-if(auth.role==='owner'){
+if(['owner','admin'].includes(auth.role)){
  const {showLeadership}=await import('./leadership.js');
  await showLeadership(auth,recordOwner);
 }
@@ -78,9 +78,9 @@ function card(s){
 function renderOverview(){const root=$('#overview-view');root.replaceChildren();for(const s of strands.filter(s=>strand==='All strands'||strand===s)){const group=skills.filter(x=>x.strand===s),box=el('article','chart');box.append(el('h3','',s));for(const name of ['All skills',...new Set(group.map(x=>x.element))]){const subset=name==='All skills'?group:group.filter(x=>x.element===name);const data=progress(subset,pupil().records);box.append(el('h4','',name+' · '+subset.length+' skills'));stages.forEach((label,i)=>{const row=el('div','bar-row'),track=el('div','track'),fill=el('div','fill s'+i);fill.style.width=data.percentages[i]+'%';track.append(fill);row.append(el('span','',label),track,el('b','',`${data.percentages[i]}% (${data.counts[i]}/${data.total})`));box.append(row)})}root.append(box)}}
 $('#pupil').onchange=e=>{selected=e.target.value;render()};$('#search').oninput=render;$('#status-filter').onchange=render;
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));render()});
-$('#add-pupil').onclick=()=>{if(!readOnly&&['staff','owner'].includes(auth.role))$('#pupil-dialog').showModal()};$('#cancel-pupil').onclick=()=>$('#pupil-dialog').close();$('#pupil-form').onsubmit=e=>{e.preventDefault();if(readOnly||!['staff','owner'].includes(auth.role))return;const name=$('#pupil-name').value.trim();if(!name)return;const p={id:crypto.randomUUID(),name,records:{}};state.pupils.push(p);selected=p.id;save();render();$('#pupil-dialog').close();$('#pupil-form').reset()};
+$('#add-pupil').onclick=()=>{if(!readOnly&&['staff','owner','admin'].includes(auth.role))$('#pupil-dialog').showModal()};$('#cancel-pupil').onclick=()=>$('#pupil-dialog').close();$('#pupil-form').onsubmit=e=>{e.preventDefault();if(readOnly||!['staff','owner','admin'].includes(auth.role))return;const name=$('#pupil-name').value.trim();if(!name)return;const p={id:crypto.randomUUID(),name,records:{}};state.pupils.push(p);selected=p.id;save();render();$('#pupil-dialog').close();$('#pupil-form').reset()};
 $('#export').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=el('a');a.href=u;a.download='nant-celyn-records.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
-$('#import-button').onclick=()=>{if(!readOnly&&['staff','owner'].includes(auth.role))$('#import').click()};$('#import').onchange=async e=>{if(readOnly||!['staff','owner'].includes(auth.role))return;try{const file=e.target.files[0];if(!file)return;if(file.size>5000000)throw Error();const incoming=JSON.parse(await file.text());if(!validBackup(incoming,skills.map(s=>s.id)))throw Error();if(!confirm('Replace the records on this device with this backup? Export your current records first if needed.'))return;state=incoming;selected=state.pupils[0].id;save();render();notify('Backup loaded; saving to your school account…')}catch{notify('Could not restore this file. Choose a valid Digital Den JSON backup.')}finally{e.target.value=''}};
+$('#import-button').onclick=()=>{if(!readOnly&&['staff','owner','admin'].includes(auth.role))$('#import').click()};$('#import').onchange=async e=>{if(readOnly||!['staff','owner','admin'].includes(auth.role))return;try{const file=e.target.files[0];if(!file)return;if(file.size>5000000)throw Error();const incoming=JSON.parse(await file.text());if(!validBackup(incoming,skills.map(s=>s.id)))throw Error();if(!confirm('Replace the records on this device with this backup? Export your current records first if needed.'))return;state=incoming;selected=state.pupils[0].id;save();render();notify('Backup loaded; saving to your school account…')}catch{notify('Could not restore this file. Choose a valid Digital Den JSON backup.')}finally{e.target.value=''}};
 render();
 
 }
