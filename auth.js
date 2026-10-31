@@ -4,6 +4,15 @@ export function validateConfig(c) {
  if(c.publishableKey.startsWith('sb_publishable_')) return c.publishableKey.length>20;
  try {return JSON.parse(atob(c.publishableKey.split('.')[1])).role==='anon';} catch {return false;}
 }
+export function serviceError(status,code){
+ const reference=' (HTTP '+status+(code?'; '+code:'')+')';
+ if(code==='PGRST205'||code==='42P01')return 'The database tables are missing or unavailable. In Supabase SQL Editor, run the latest supabase/schema.sql from GitHub, then reload.'+reference;
+ if(code==='42501')return 'Database permission denied. In Supabase SQL Editor, run the latest supabase/schema.sql to apply the required access rules, then sign in again.'+reference;
+ if(code==='42P17')return 'A database access rule has a recursion error. Apply the latest supabase/schema.sql in Supabase SQL Editor.'+reference;
+ if(code==='42703'||code==='PGRST204'||code==='PGRST202')return 'The database setup is out of date. Run the latest supabase/schema.sql in Supabase SQL Editor, then reload.'+reference;
+ if(status===401)return 'Your session or project key was not accepted. Sign out and sign in again; if it continues, check that auth-config.json uses the public key for the correct project.'+reference;
+ return 'The school service could not complete this request. Share this error reference with your administrator.'+reference;
+}
 const SESSION='nant-celyn-session';
 export async function authenticate() {
  const response=await fetch('./auth-config.json',{cache:'no-store'});
@@ -44,7 +53,11 @@ export async function authenticate() {
  async function api(path,options={}){
   const bearer=await accessToken();
   const r=await fetch(config.supabaseUrl+path,{...options,headers:{apikey:config.publishableKey,Authorization:'Bearer '+bearer,'Content-Type':'application/json',...options.headers}});
-  if(!r.ok) {if(r.status===401){sessionStorage.removeItem(SESSION);throw Error('Your session expired. Sign out and sign in again.');}throw Error('The school service could not complete this request. Check your connection or contact your administrator.');}
+  if(!r.ok) {
+   let code='';try{const failure=await r.json();if(typeof failure.code==='string'&&/^[A-Z0-9_]{1,20}$/.test(failure.code))code=failure.code;}catch{}
+   if(r.status===401)sessionStorage.removeItem(SESSION);
+   throw Error(serviceError(r.status,code));
+  }
   return r.status===204?null:r.json();
  }
  async function signIn(email,password){store(await publicRequest('token?grant_type=password',{email,password}));location.replace(redirect);}
